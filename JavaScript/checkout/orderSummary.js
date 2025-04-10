@@ -1,11 +1,11 @@
-import { cart, removeFromCart, updateDeliveryOption } from "../../data/cart.js";
+import { cart, removeFromCart, updateDeliveryOption,updateCartQuantity } from "../../data/cart.js";
 import { products,getProduct } from "../../data/products.js";
 import { formatCurrency } from "../utils/money.js";
 import { hello } from "https://unpkg.com/supersimpledev@1.0.1/hello.esm.js";
 import dayjs from 'https://unpkg.com/supersimpledev@8.5.0/dayjs/esm/index.js';
-import { deliveryOptions,getDeliveryOption } from "../../data/deliveryoptions.js";
+import { deliveryOptions,getDeliveryOption,calculateDeliveryDate } from "../../data/deliveryoptions.js";
 import { renderPaymentSummary } from "./paymentSummary.js";
-
+import { renderCheckoutHeader } from "./checkoutHeader.js";
 
 
 export function rendomOrderSummary() {
@@ -22,14 +22,7 @@ export function rendomOrderSummary() {
 
         const deliveryOption =getDeliveryOption(deliveryOptionId);
 
-        const today = dayjs();
-        const deliveryDate = today.add(
-            deliveryOption.deliveryDays,
-            'days'
-        );
-        const dateString = deliveryDate.format(
-            'dddd, MMMM D'
-        );
+        const dateString = calculateDeliveryDate(deliveryOption);
 
         cartSummaryHTML += `
     <div class="cart-item-container 
@@ -51,11 +44,16 @@ export function rendomOrderSummary() {
             </div>
             <div class="product-quantity">
                 <span>
-                Quantity: <span class="quantity-label">${cartItem.quantity}</span>
+               Quantity: <span class="quantity-label js-quantity-label-${matchingProduct.id}">${cartItem.quantity}</span>
                 </span>
-                <span class="update-quantity-link link-primary">
+                <span class="update-quantity-link link-primary js-update-link" data-product-id="${matchingProduct.id}">
                 Update
                 </span>
+                <input class="quantity-input js-quantity-input-${matchingProduct.id}">
+              <span class="save-quantity-link link-primary js-save-link"
+                data-product-id="${matchingProduct.id}">
+                Save
+              </span>
                 <span class="delete-quantity-link link-primary js-delete-link" data-product-id="${matchingProduct.id}">
                 Delete
                 </span>
@@ -77,14 +75,8 @@ export function rendomOrderSummary() {
         let html = '';
 
         deliveryOptions.forEach((deliveryOption) => {
-            const today = dayjs();
-            const deliveryDate = today.add(
-                deliveryOption.deliveryDays,
-                'days'
-            );
-            const dateString = deliveryDate.format(
-                'dddd, MMMM D'
-            );
+           
+            const dateString = calculateDeliveryDate(deliveryOption);
             const priceString = deliveryOption.priceCents === 0
                 ? 'FREE'
                 : `$${formatCurrency(deliveryOption.priceCents)} -`;
@@ -121,9 +113,8 @@ export function rendomOrderSummary() {
                 const productId = link.dataset.productId;
                 removeFromCart(productId);
 
-                const container = document.querySelector(`.js-cart-item-container-${productId}`);
-                container.remove();
-
+                renderCheckoutHeader();
+                rendomOrderSummary();
                 renderPaymentSummary();
             });
         });
@@ -137,4 +128,37 @@ export function rendomOrderSummary() {
             renderPaymentSummary();
          });
      });
+    document.querySelectorAll('.js-update-link')
+        .forEach((link) => {
+            link.addEventListener('click', () =>{
+                const productId = link.dataset.productId;
+
+                const container = document.querySelector(
+                    `.js-cart-item-container-${productId}`
+                );
+                container.classList.add("is-editing-quantity");
+            });
+        });
+    document.querySelectorAll('.js-save-link')
+        .forEach((link) => {
+            link.addEventListener('click', () =>{
+                const productId = link.dataset.productId;
+
+                const container = document.querySelector(
+                    `.js-cart-item-container-${productId}`
+                );
+                container.classList.remove('is-editing-quantity');
+
+                const quantityInput = document.querySelector(
+                    `.js-quantity-input-${productId}`
+                );
+                const newQuantity = Number(quantityInput.value);
+                updateCartQuantity(productId, newQuantity);
+
+                renderCheckoutHeader();
+                rendomOrderSummary();
+                renderPaymentSummary();
+            });
+        });
+    
 }
