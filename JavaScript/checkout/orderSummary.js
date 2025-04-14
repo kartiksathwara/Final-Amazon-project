@@ -8,7 +8,7 @@ import { renderPaymentSummary } from "./paymentSummary.js";
 import { renderCheckoutHeader } from "./checkoutHeader.js";
 
 
-export function rendomOrderSummary() {
+export function renderOrderSummary() {
 
     let cartSummaryHTML = '';
 
@@ -114,7 +114,7 @@ export function rendomOrderSummary() {
                 removeFromCart(productId);
 
                 renderCheckoutHeader();
-                rendomOrderSummary();
+                renderOrderSummary();
                 renderPaymentSummary();
             });
         });
@@ -124,7 +124,7 @@ export function rendomOrderSummary() {
         element.addEventListener('click', () => {
             const { productId, deliveryOptionId } = element.dataset;
             updateDeliveryOption(productId, deliveryOptionId);
-            rendomOrderSummary();
+            renderOrderSummary();
             renderPaymentSummary();
          });
      });
@@ -156,7 +156,7 @@ export function rendomOrderSummary() {
                 updateCartQuantity(productId, newQuantity);
 
                 renderCheckoutHeader();
-                rendomOrderSummary();
+                renderOrderSummary();
                 renderPaymentSummary();
             });
         });
